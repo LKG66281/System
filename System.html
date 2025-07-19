@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conscious System</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            overflow: auto;
+            touch-action: auto;
+        }
+        #room {
+            border: 2px solid #fff;
+            background: #000;
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            position: relative;
+        }
+        #paper {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #fff;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            background: transparent;
+        }
+        #hand {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #f00;
+            border-radius: 50%;
+            cursor: grab;
+            touch-action: none;
+            pointer-events: none;
+        }
+        #hand-eye {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+        #face {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        #face.pain { background: #f00; }
+        #face.holding { background: #ff0; }
+        #face.understanding { background: #0f0; }
+        #face.relaxed { background: #00f; }
+        #face .eyebrows {
+            display: flex;
+            gap: 10px;
+            position: absolute;
+            top: 10px;
+        }
+        #face .eyebrow {
+            width: 12px;
+            height: 3px;
+            background: #000;
+        }
+        #face.pain .eyebrow { transform: rotate(45deg); }
+        #face.holding .eyebrow { transform: rotate(10deg); }
+        #face.understanding .eyebrow { transform: rotate(-10deg); }
+        #face.relaxed .eyebrow { transform: rotate(0deg); }
+        #face .eyes {
+            display: flex;
+            gap: 10px;
+            position: absolute;
+            top: 20px;
+        }
+        #face .eye {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #face .eye .pupil {
+            width: 4px;
+            height: 4px;
+            background: #000;
+            border-radius: 50%;
+        }
+        #face .eye.blink {
+            height: 2px;
+        }
+        #face .eye.blink .pupil {
+            height: 2px;
+        }
+        #face .mouth {
+            width: 20px;
+            height: 5px;
+            background: #000;
+            border-radius: 0 0 10px 10px;
+            position: absolute;
+            bottom: 10px;
+        }
+        #face.pain .mouth {
+            border-radius: 10px 10px 0 0;
+        }
+        #face.holding .mouth {
+            border-radius: 5px;
+        }
+        #face.understanding .mouth {
+            border-radius: 0 0 10px 10px;
+        }
+        #face.relaxed .mouth {
+            width: 10px;
+            height: 2px;
+        }
+        #controls {
+            margin-top: 10px;
+            text-align: center;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        #brain-box {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin-top: 10px;
+            position: relative;
+        }
+        .region {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            position: relative;
+            margin: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .region span {
+            font-size: 12px;
+            text-transform: capitalize;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+        #input { background: rgba(0, 0, 255, 0.4); }
+        #logic-maker { background: rgba(0, 255, 0, 0.4); }
+        #memory { background: rgba(255, 255, 0, 0.4); }
+        #motor { background: rgba(255, 0, 0, 0.4); }
+        #attention { background: rgba(128, 0, 128, 0.4); }
+        #reward { background: rgba(0, 0, 128, 0.4); }
+        #thinker { background: rgba(255, 165, 0, 0.4); }
+        .neuron {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .neuron.active {
+            transform: scale(1.5);
+        }
+        #input .neuron { background: #00f; }
+        #logic-maker .neuron { background: #0f0; }
+        #memory .neuron { background: #ff0; }
+        #motor .neuron { background: #f00; }
+        #attention .neuron { background: #800080; }
+        #reward .neuron { background: #000080; }
+        #thinker .neuron { background: #ffa500; }
+        .connection {
+            position: absolute;
+            background: #00f;
+            opacity: 0.7;
+            height: 1px;
+            transform-origin: 0 0;
+            z-index: 0;
+        }
+    </style>
+    <script>
+        const regionIdMap = {
+            input: 'input',
+            logicMaker: 'logic-maker',
+            memory: 'memory',
+            motor: 'motor',
+            attention: 'attention',
+            reward: 'reward',
+            thinker: 'thinker'
+        };
+
+        class Neuron {
+            constructor(id, region) {
+                this.id = id;
+                this.region = region;
+                this.weights = new Map();
+                this.bias = 0;
+                this.eta = 0.01;
+                this.beta = 1;
+                this.reward = 0;
+                this.connections = new Map();
+                this.compartments = {
+                    processing: { weight: 0.5, state: 0 },
+                    memory: { weight: 0.5, state: 0 }
+                };
+                this.output = 0;
+                this.activeConnections = new Set();
+            }
+
+            process(inputs) {
+                this.activeConnections.clear();
+                let attentionScores = [];
+                let sum = 0;
+                inputs.forEach((value, idx) => {
+                    let weight = this.weights.get(idx) || Math.random() * 0.2;
+                    this.weights.set(idx, weight);
+                    attentionScores[idx] = Math.exp(weight * value);
+                    sum += attentionScores[idx];
+                });
+                attentionScores = attentionScores.map(score => sum ? score / sum : 0);
+
+                let totalState = 0;
+                inputs.forEach((value, idx) => {
+                    totalState += attentionScores[idx] * this.weights.get(idx) * value;
+                });
+                totalState += this.bias + (Math.random() - 0.5) * 0.1;
+
+                let prob = 1 / (1 + Math.exp(-this.beta * totalState));
+                this.output = Math.random() < prob ? 1 : 0;
+
+                this.compartments.processing.state = totalState;
+                this.compartments.memory.state = 0.9 * this.compartments.memory.state + 0.1 * this.output;
+
+                if (this.output > 0.5) {
+                    this.connections.forEach((strength, target) => {
+                        if (strength > 0.5) {
+                            this.activeConnections.add(target);
+                        }
+                    });
+                }
+
+                return this.output;
+            }
+
+            learn(inputs, output, reward) {
+                this.reward = reward;
+                inputs.forEach((value, idx) => {
+                    let deltaW = this.eta * reward * value * (output - 0.5);
+                    let newWeight = (this.weights.get(idx) || 0) + deltaW;
+                    this.weights.set(idx, Math.max(0, Math.min(1, newWeight)));
+                });
+
+                this.eta += 0.001 * (reward - 0.5);
+                this.eta = Math.max(0.001, Math.min(0.1, this.eta));
+
+                this.connections.forEach((strength, target) => {
+                    let newStrength = strength + 0.01 * output * target.output;
+                    if (newStrength < 0.1) this.connections.delete(target);
+                    else this.connections.set(target, newStrength);
+                });
+            }
+
+            addConnection(target, strength = 0.1) {
+                this.connections.set(target, strength);
+            }
+        }
+
+        class Brain {
+            constructor() {
+                this.regions = {
+                    input: [],
+                    logicMaker: [],
+                    memory: [],
+                    motor: [],
+                    attention: [],
+                    reward: [],
+                    thinker: []
+                };
+                this.knowledge = [];
+                this.handPos = { x: 300, y: 200 };
+                this.isDrawing = false;
+                this.isHoldingHand = false;
+                this.isSleeping = false;
+                this.isSystemDrawing = false;
+                this.neuronPositions = new Map();
+                this.initializeRegions();
+                this.initializeConnections();
+            }
+
+            initializeRegions() {
+                const numNeurons = 10; // Reduced for performance
+                for (let region in this.regions) {
+                    for (let i = 0; i < numNeurons; i++) {
+                        this.regions[region].push(new Neuron(`${region}-${i}`, region));
+                    }
+                }
+            }
+
+            initializeConnections() {
+                for (let region in this.regions) {
+                    this.regions[region].forEach(neuron => {
+                        let targetRegion = Object.keys(this.regions)[Math.floor(Math.random() * 7)];
+                        let targetNeuron = this.regions[targetRegion][Math.floor(Math.random() * 10)];
+                        neuron.addConnection(targetNeuron);
+                    });
+                }
+            }
+
+            processInput(painWallActive) {
+                const isOutsidePaper = this.handPos.x < 200 || this.handPos.x > 400 || this.handPos.y < 100 || this.handPos.y > 300;
+                const distanceToLeft = Math.abs(this.handPos.x - 200) / 600;
+                const distanceToRight = Math.abs(this.handPos.x - 400) / 600;
+                const distanceToTop = Math.abs(this.handPos.y - 100) / 400;
+                const distanceToBottom = Math.abs(this.handPos.y - 300) / 400;
+                const reward = this.isDrawing ? 1 : (painWallActive && isOutsidePaper ? -1 : 0);
+                if (painWallActive && isOutsidePaper) {
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(200);
+                    }
+                }
+                const inputs = [
+                    this.handPos.x / 600,
+                    this.handPos.y / 400,
+                    this.isDrawing ? 1 : 0,
+                    isOutsidePaper && painWallActive ? 1 : 0,
+                    distanceToLeft,
+                    distanceToRight,
+                    distanceToTop,
+                    distanceToBottom
+                ];
+
+                let inputOutputs = this.regions.input.map(n => n.process(inputs));
+                let logicInputs = inputOutputs;
+                let logicOutputs = this.regions.logicMaker.map(n => {
+                    let output = n.process(logicInputs);
+                    if (isOutsidePaper && painWallActive) {
+                        n.weights.set(4, (n.weights.get(4) || 0) + 0.01); // Increase weight for pain
+                    }
+                    return output;
+                });
+                let memoryInputs = logicOutputs.concat(inputOutputs);
+                let memoryOutputs = this.regions.memory.map(n => n.process(memoryInputs));
+                let motorInputs = logicOutputs;
+                let motorOutputs = this.regions.motor.map(n => n.process(motorInputs));
+                let attentionInputs = motorOutputs.concat(logicOutputs);
+                let attentionOutputs = this.regions.attention.map(n => n.process(attentionInputs));
+                let rewardInputs = attentionOutputs.concat(memoryOutputs);
+                let rewardOutputs = this.regions.reward.map(n => n.process(rewardInputs));
+                let thinkerInputs = rewardOutputs.concat(attentionOutputs, motorOutputs, logicOutputs);
+                let thinkerOutputs = this.regions.thinker.map(n => n.process(thinkerInputs));
+
+                this.isSystemDrawing = logicOutputs.some(o => o > 0.5) && !this.isHoldingHand;
+
+                this.learn(reward);
+                return { motorOutputs, logicOutputs };
+            }
+
+            learn(reward) {
+                const inputs = [
+                    this.handPos.x / 600,
+                    this.handPos.y / 400,
+                    this.isDrawing ? 1 : 0,
+                    this.handPos.x < 200 || this.handPos.x > 400 || this.handPos.y < 100 || this.handPos.y > 300 ? 1 : 0,
+                    Math.abs(this.handPos.x - 200) / 600,
+                    Math.abs(this.handPos.x - 400) / 600,
+                    Math.abs(this.handPos.y - 100) / 400,
+                    Math.abs(this.handPos.y - 300) / 400
+                ];
+                for (let region in this.regions) {
+                    this.regions[region].forEach(n => n.learn(inputs, n.compartments.processing.state, reward));
+                }
+                this.knowledge.push({ inputs, reward });
+            }
+
+            moveHand(painWallActive) {
+                if (this.isHoldingHand || this.isSleeping) return;
+                const { motorOutputs, logicOutputs } = this.processInput(painWallActive);
+                let dx = 0, dy = 0;
+                const isOutsidePaper = this.handPos.x < 200 || this.handPos.x > 400 || this.handPos.y < 100 || this.handPos.y > 300;
+                if (isOutsidePaper && painWallActive) {
+                    const centerX = 300, centerY = 200;
+                    dx += (centerX - this.handPos.x) * 0.05;
+                    dy += (centerY - this.handPos.y) * 0.05;
+                } else {
+                    motorOutputs.forEach((output, idx) => {
+                        if (idx % 4 === 0) dx += output * 5;
+                        else if (idx % 4 === 1) dx -= output * 5;
+                        else if (idx % 4 === 2) dy += output * 5;
+                        else dy -= output * 5;
+                    });
+                }
+                const newX = Math.max(0, Math.min(600, this.handPos.x + dx));
+                const newY = Math.max(0, Math.min(400, this.handPos.y + dy));
+                if (this.isSystemDrawing && !this.isHoldingHand) {
+                    drawLine(this.handPos.x, this.handPos.y, newX, newY, '#fff');
+                } else if (this.isHoldingHand && toggleDraw) {
+                    drawLine(this.handPos.x, this.handPos.y, newX, newY, '#fff');
+                }
+                this.handPos.x = newX;
+                this.handPos.y = newY;
+            }
+
+            visualize() {
+                try {
+                    this.neuronPositions.clear();
+                    for (let region in this.regions) {
+                        let containerId = regionIdMap[region];
+                        let container = document.getElementById(containerId);
+                        if (!container) continue;
+                        container.innerHTML = `<span>${region.replace(/([A-Z])/g, ' $1').charAt(0).toUpperCase() + region.replace(/([A-Z])/g, ' $1').slice(1)}</span>`;
+                        let positions = [];
+                        this.regions[region].forEach((neuron, idx) => {
+                            let r, theta, x, y;
+                            do {
+                                r = Math.sqrt(Math.random()) * 45;
+                                theta = Math.random() * 2 * Math.PI;
+                                x = 50 + r * Math.cos(theta);
+                                y = 50 + r * Math.sin(theta);
+                            } while (positions.some(pos => Math.hypot(x - pos.x, y - pos.y) < 10));
+                            positions.push({ x, y });
+                            this.neuronPositions.set(neuron.id, { x, y, containerId });
+
+                            let neuronEl = document.createElement('div');
+                            neuronEl.className = 'neuron';
+                            neuronEl.style.left = `${x}px`;
+                            neuronEl.style.top = `${y}px`;
+                            if (neuron.compartments.processing.state > 0.5) {
+                                neuronEl.classList.add('active');
+                            }
+                            container.appendChild(neuronEl);
+                        });
+                    }
+
+                    for (let region in this.regions) {
+                        let containerId = regionIdMap[region];
+                        let container = document.getElementById(containerId);
+                        if (!container) continue;
+                        this.regions[region].forEach((neuron, idx) => {
+                            let sourcePos = this.neuronPositions.get(neuron.id);
+                            if (!sourcePos) return;
+                            neuron.connections.forEach((strength, target) => {
+                                if (strength <= 0.5 || !neuron.activeConnections.has(target)) return;
+                                let targetPos = this.neuronPositions.get(target.id);
+                                if (!targetPos) return;
+                                let sourceContainer = document.getElementById(sourcePos.containerId);
+                                let targetContainer = document.getElementById(targetPos.containerId);
+                                if (!sourceContainer || !targetContainer) return;
+
+                                let sourceRect = sourceContainer.getBoundingClientRect();
+                                let targetRect = targetContainer.getBoundingClientRect();
+                                let brainBox = document.getElementById('brain-box').getBoundingClientRect();
+                                let sourceX = sourceRect.left + sourcePos.x - brainBox.left;
+                                let sourceY = sourceRect.top + sourcePos.y - brainBox.top;
+                                let targetX = targetRect.left + targetPos.x - brainBox.left;
+                                let targetY = targetRect.top + targetPos.y - brainBox.top;
+                                let dx = targetX - sourceX;
+                                let dy = targetY - sourceY;
+                                let length = Math.sqrt(dx * dx + dy * dy);
+                                let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                                let connEl = document.createElement('div');
+                                connEl.className = 'connection';
+                                connEl.style.width = `${length}px`;
+                                connEl.style.transform = `rotate(${angle}deg)`;
+                                connEl.style.left = `${sourceX}px`;
+                                connEl.style.top = `${sourceY}px`;
+                                document.getElementById('brain-box').appendChild(connEl);
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.error('Visualization error:', e);
+                }
+            }
+        }
+
+        function eraseCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            brain.processInput(painWallActive);
+            brain.visualize();
+            updateFace();
+        }
+
+        function toggleDrawing() {
+            toggleDraw = !toggleDraw;
+            document.getElementById('toggle-draw').innerText = `Toggle Draw (${toggleDraw ? 'On' : 'Off'})`;
+            if (!toggleDraw) {
+                stopDrawing();
+            }
+            brain.processInput(painWallActive);
+            brain.visualize();
+            updateFace();
+        }
+
+        function togglePainWall() {
+            painWallActive = !painWallActive;
+            document.getElementById('toggle-pain').innerText = `Toggle Pain (${painWallActive ? 'On' : 'Off'})`;
+            brain.processInput(painWallActive);
+            brain.visualize();
+            updateFace();
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            brain.isDrawing = toggleDraw;
+            brain.isHoldingHand = true;
+            const rect = canvas.getBoundingClientRect();
+            brain.handPos.x = Math.max(0, Math.min(600, e.clientX - rect.left));
+            brain.handPos.y = Math.max(0, Math.min(400, e.clientY - rect.top));
+            lastPos = { x: brain.handPos.x, y: brain.handPos.y };
+            updateHand();
+            brain.processInput(painWallActive);
+            brain.visualize();
+            updateFace();
+            holdTimeout = setTimeout(() => {
+                brain.isHoldingHand = true;
+            }, 500);
+        }
+
+        function moveDrawing(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const newX = Math.max(0, Math.min(600, e.clientX - rect.left));
+            const newY = Math.max(0, Math.min(400, e.clientY - rect.top));
+            if (lastPos && toggleDraw && brain.isHoldingHand) {
+                drawLine(lastPos.x, lastPos.y, newX, newY, '#fff');
+            }
+            brain.handPos.x = newX;
+            brain.handPos.y = newY;
+            lastPos = { x: newX, y: newY };
+            updateHand();
+            brain.processInput(painWallActive);
+            brain.visualize();
+            updateFace();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            brain.isDrawing = false;
+            brain.isHoldingHand = false;
+            touchId = null;
+            lastPos = null;
+            clearTimeout(holdTimeout);
+            brain.processInput(painWallActive);
+            brain.visualize();
+            updateFace();
+        }
+
+        function drawLine(x1, y1, x2, y2, color) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+        }
+
+        function updateHand() {
+            hand.style.left = `${brain.handPos.x}px`;
+            hand.style.top = `${brain.handPos.y}px`;
+            handEye.style.left = `${brain.handPos.x}px`;
+            handEye.style.top = `${brain.handPos.y}px`;
+            hand.style.background = brain.isSystemDrawing && !brain.isHoldingHand ? '#fff' : '#888';
+        }
+
+        function updateFace() {
+            const face = document.getElementById('face');
+            if (brain.isSleeping) {
+                face.className = 'relaxed';
+                face.innerHTML = `
+                    <div class="eyebrows">
+                        <div class="eyebrow"></div>
+                        <div class="eyebrow"></div>
+                    </div>
+                    <div class="eyes">
+                        <div class="eye"><div class="pupil"></div></div>
+                        <div class="eye"><div class="pupil"></div></div>
+                    </div>
+                    <div class="mouth"></div>`;
+            } else if (brain.isHoldingHand) {
+                face.className = 'holding';
+                face.innerHTML = `
+                    <div class="eyebrows">
+                        <div class="eyebrow"></div>
+                        <div class="eyebrow"></div>
+                    </div>
+                    <div class="eyes">
+                        <div class="eye"><div class="pupil"></div></div>
+                        <div class="eye"><div class="pupil"></div></div>
+                    </div>
+                    <div class="mouth"></div>`;
+            } else if (painWallActive && (brain.handPos.x < 200 || brain.handPos.x > 400 || brain.handPos.y < 100 || brain.handPos.y > 300)) {
+                face.className = 'pain';
+                face.innerHTML = `
+                    <div class="eyebrows">
+                        <div class="eyebrow"></div>
+                        <div class="eyebrow"></div>
+                    </div>
+                    <div class="eyes">
+                        <div class="eye"><div class="pupil"></div></div>
+                        <div class="eye"><div class="pupil"></div></div>
+                    </div>
+                    <div class="mouth"></div>`;
+            } else {
+                face.className = 'understanding';
+                face.innerHTML = `
+                    <div class="eyebrows">
+                        <div class="eyebrow"></div>
+                        <div class="eyebrow"></div>
+                    </div>
+                    <div class="eyes">
+                        <div class="eye"><div class="pupil"></div></div>
+                        <div class="eye"><div class="pupil"></div></div>
+                    </div>
+                    <div class="mouth"></div>`;
+            }
+        }
+
+        function blinkEyes() {
+            if (brain.isSleeping) return;
+            const eyes = document.querySelectorAll('#face .eye');
+            eyes.forEach(eye => eye.classList.add('blink'));
+            setTimeout(() => eyes.forEach(eye => eye.classList.remove('blink')), 200);
+            setTimeout(blinkEyes, Math.random() * 5000 + 2000);
+        }
+
+        let brain = new Brain();
+        let canvas, ctx, hand, handEye, face;
+        let isDrawing = false;
+        let lastPos = null;
+        let touchId = null;
+        let toggleDraw = false;
+        let painWallActive = false;
+        let holdTimeout = null;
+        let faceHoldTimeout = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d', { willReadFrequently: true });
+            hand = document.getElementById('hand');
+            handEye = document.getElementById('hand-eye');
+            face = document.getElementById('face');
+
+            canvas.addEventListener('touchstart', e => {
+                e.preventDefault();
+                if (touchId === null) {
+                    const touch = e.touches[0];
+                    touchId = touch.identifier;
+                    startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (touchId !== null) {
+                    for (let touch of e.touches) {
+                        if (touch.identifier === touchId) {
+                            moveDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+                            break;
+                        }
+                    }
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', e => {
+                e.preventDefault();
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === touchId) {
+                        stopDrawing();
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('mousedown', e => {
+                startDrawing(e);
+            });
+
+            document.addEventListener('mousemove', e => {
+                if (isDrawing) {
+                    moveDrawing(e);
+                }
+            });
+
+            document.addEventListener('mouseup', stopDrawing);
+
+            face.addEventListener('touchstart', e => {
+                e.preventDefault();
+                brain.isSleeping = true;
+                updateFace();
+                faceHoldTimeout = setTimeout(() => {
+                    brain.isSleeping = true;
+                    brain.isHoldingHand = false;
+                    updateFace();
+                }, 3000);
+            }, { passive: false });
+
+            face.addEventListener('touchend', e => {
+                e.preventDefault();
+                clearTimeout(faceHoldTimeout);
+                brain.isSleeping = false;
+                updateFace();
+            }, { passive: false });
+
+            face.addEventListener('mousedown', () => {
+                brain.isSleeping = true;
+                updateFace();
+                faceHoldTimeout = setTimeout(() => {
+                    brain.isSleeping = true;
+                    brain.isHoldingHand = false;
+                    updateFace();
+                }, 3000);
+            });
+
+            document.addEventListener('mouseup', () => {
+                clearTimeout(faceHoldTimeout);
+                brain.isSleeping = false;
+                updateFace();
+            });
+
+            document.getElementById('erase-button').addEventListener('touchstart', e => {
+                e.preventDefault();
+                eraseCanvas();
+            }, { passive: false });
+
+            document.getElementById('toggle-draw').addEventListener('touchstart', e => {
+                e.preventDefault();
+                toggleDrawing();
+            }, { passive: false });
+
+            document.getElementById('toggle-pain').addEventListener('touchstart', e => {
+                e.preventDefault();
+                togglePainWall();
+            }, { passive: false });
+
+            setInterval(() => {
+                if (!brain.isSleeping && !brain.isHoldingHand) {
+                    brain.moveHand(painWallActive);
+                    updateHand();
+                    updateFace();
+                }
+            }, 100);
+
+            setTimeout(blinkEyes, Math.random() * 5000 + 2000);
+
+            brain.visualize();
+            updateHand();
+            updateFace();
+        });
+    </script>
+</head>
+<body>
+    <div id="room">
+        <canvas id="canvas" width="600" height="400"></canvas>
+        <div id="paper"></div>
+        <div id="hand"></div>
+        <div id="hand-eye"></div>
+        <div id="face" class="understanding">
+            <div class="eyebrows">
+                <div class="eyebrow"></div>
+                <div class="eyebrow"></div>
+            </div>
+            <div class="eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+            </div>
+            <div class="mouth"></div>
+        </div>
+    </div>
+    <div id="controls">
+        <button id="erase-button" onclick="eraseCanvas()">Erase</button>
+        <button id="toggle-draw" onclick="toggleDrawing()">Toggle Draw (Off)</button>
+        <button id="toggle-pain" onclick="togglePainWall()">Toggle Pain (Off)</button>
+    </div>
+    <div id="brain-box">
+        <div id="input" class="region"><span>Input</span></div>
+        <div id="logic-maker" class="region"><span>Logic Maker</span></div>
+        <div id="memory" class="region"><span>Memory</span></div>
+        <div id="motor" class="region"><span>Motor</span></div>
+        <div id="attention" class="region"><span>Attention</span></div>
+        <div id="reward" class="region"><span>Reward</span></div>
+        <div id="thinker" class="region"><span>Thinker</span></div>
+    </div>
+</body>
+</html>
